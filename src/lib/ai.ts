@@ -20,7 +20,7 @@ export async function getCerebrasResponse(prompt: string) {
         model: 'qwen-3-32b',
     });
 
-    return chatCompletion?.choices[0]?.message?.content;
+    return chatCompletion?.choices[0]?.message?.content.split("</think>")[1];
 }
 
 export async function getOpenRouterResponse(prompt: string) {

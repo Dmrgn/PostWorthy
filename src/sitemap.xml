@@ -6,9 +6,12 @@
             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 
 <url>
+  <loc>https://adsistance.danielmorgan.xyz/</loc>
+  <lastmod>2025-06-21T14:06:03+00:00</lastmod>
+</url>
+<url>
   <loc>https://adsistance.danielmorgan.xyz/app</loc>
   <lastmod>2025-06-21T14:06:03+00:00</lastmod>
 </url>
-
 
 </urlset>
