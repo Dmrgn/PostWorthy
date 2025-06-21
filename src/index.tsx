@@ -9,6 +9,16 @@ const server = serve({
   routes: {
     "/": index,
     "/app": index,
+    "/hero.png": new Response(await Bun.file("src/hero.png").bytes(), {
+      headers: {
+        "Content-Type": "image/png",
+      },
+    }),
+    "/features.png": new Response(await Bun.file("src/features.png").bytes(), {
+      headers: {
+        "Content-Type": "image/png",
+      },
+    }),
     "/api/scrape-reddit": {
       async POST(req) {
         const { subreddit, postLimit } = await req.json();

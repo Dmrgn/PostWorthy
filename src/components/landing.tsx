@@ -91,7 +91,7 @@ export default function LandingPage() {
               </div>
               <div className="flex items-center justify-center">
                 <img
-                  src="/placeholder.svg?height=400&width=600"
+                  src="/hero.png"
                   width={600}
                   height={400}
                   alt="Adsistance Dashboard"
@@ -153,7 +153,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <img
-                src="/placeholder.svg?height=500&width=600"
+                src="/features.png"
                 width={600}
                 height={500}
                 alt="Features"
