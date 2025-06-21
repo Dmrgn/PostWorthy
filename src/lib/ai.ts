@@ -17,7 +17,7 @@ const openai = new OpenAI({
 export async function getCerebrasResponse(prompt: string) {
     const chatCompletion = await client.chat.completions.create({
         messages: [{ role: 'user', content: prompt }],
-        model: 'llama-3.3-70b',
+        model: 'qwen-3-32b',
     });
 
     return chatCompletion?.choices[0]?.message?.content;
