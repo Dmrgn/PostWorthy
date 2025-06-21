@@ -133,7 +133,10 @@ ${JSON.stringify(posts, null, 2)}`;
       },
     },
   },
-  development: true,
+  development: process.env.NODE_ENV !== "production" && {
+    console: true,
+    hmr: false
+  },
 });
 
 console.log(`Listening on ${server.url}`);
