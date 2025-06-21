@@ -38,7 +38,7 @@ export default function LandingPage() {
 
           <div className="flex items-center space-x-4">
             <Button variant="ghost" className="hidden md:inline-flex" asChild>
-              <a href="/app">Source Code
+              <a href="https://github.com/Dmrgn/Adsistance">Source Code
                 <Github></Github>
               </a>
             </Button>
@@ -207,7 +207,7 @@ export default function LandingPage() {
                 <a href="https://linkedin.danielmorgan.xyz" className="text-gray-400 hover:text-gray-600">
                   <Linkedin className="h-5 w-5" />
                 </a>
-                <a href="https://github.com/dmrgn/" className="text-gray-400 hover:text-gray-600">
+                <a href="https://github.com/Dmrgn/Adsistance" className="text-gray-400 hover:text-gray-600">
                   <Github className="h-5 w-5" />
                 </a>
                 <a href="mailto:me@danielmorgan.xyz" className="text-gray-400 hover:text-gray-600">
