@@ -154,6 +154,18 @@ const result = await build({
   ...cliConfig, // Merge in any CLI-provided options
 });
 
+// Copy static files like robots.txt and sitemap.xml
+console.log("\n📂 Copying static files...");
+const staticFiles = ["robots.txt", "sitemap.xml", "manifest.json"];
+for (const file of staticFiles) {
+  const sourcePath = path.join(process.cwd(), "src", file);
+  const destPath = path.join(outdir, file);
+  if (existsSync(sourcePath)) {
+    await Bun.write(destPath, Bun.file(sourcePath));
+    console.log(`  - Copied ${file} to ${path.relative(process.cwd(), destPath)}`);
+  }
+}
+
 // Print the results
 const end = performance.now();
 
