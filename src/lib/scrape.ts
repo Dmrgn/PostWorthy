@@ -16,8 +16,10 @@ interface RedditPost {
   permalink: string;
 }
 
+// executablePath: '/usr/bin/brave-browser', 
+
 export async function scrapeRedditPosts(subreddit: string, postLimit: number) {
-  const browser = await puppeteer.launch({ headless: true, executablePath: '/usr/bin/brave-browser', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   const page = await browser.newPage();
 
   // Set viewport to mobile to match the Shreddit UI
