@@ -25,6 +25,16 @@ export async function scrapeRedditPosts(subreddit: string, postLimit: number) {
   // Set viewport to mobile to match the Shreddit UI
   await page.setViewport({ width: 414, height: 896 });
 
+  await page.setCookie({
+    name: 'reddit_session',
+    value: process.env.REDDIT_SESSION,
+    domain: '.reddit.com',
+    path: '/',
+    httpOnly: true,
+    secure: true,
+  });
+  
+
   try {
     // Navigate to the Reddit URL
     await page.goto(`https://www.reddit.com/r/${subreddit}/`);
