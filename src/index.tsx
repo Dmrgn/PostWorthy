@@ -4,6 +4,7 @@ import pdfParse from "pdf-parse";
 import { scrapeRedditPosts } from "./lib/scrape";
 import { getOpenRouterResponse, getCerebrasResponse } from "./lib/ai";
 import { PostSchema } from "./lib/schemas";
+import { JUDGE_GUIDE } from "./lib/prompts";
 
 const server = serve({
   routes: {
@@ -97,6 +98,9 @@ ${JSON.stringify(posts, null, 2)}`;
 
           **Additional Instructions:**
           ${customPrompt || "N/A"}
+
+          **Guide**
+          ${JUDGE_GUIDE}
 
           **Creativity Level:** ${creativity} (0.1=conservative, 1=very creative)
 

@@ -1,5 +1,6 @@
 import Cerebras from '@cerebras/cerebras_cloud_sdk';
 import OpenAI from 'openai';
+import {GUIDE} from "./prompts"
 
 const client = new Cerebras({
     apiKey: process.env['CEREBRAS_API_KEY'],
