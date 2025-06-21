@@ -19,6 +19,21 @@ const server = serve({
         "Content-Type": "image/png",
       },
     }),
+    "/sitemap.xml": new Response(await Bun.file("src/sitemap.xml").bytes(), {
+      headers: {
+        "Content-Type": "application/xml",
+      },
+    }),
+    "/robots.txt": new Response(await Bun.file("src/robots.txt").bytes(), {
+      headers: {
+        "Content-Type": "text/plain",
+      },
+    }),
+    "/manifest.json": new Response(await Bun.file("src/manifest.json").bytes(), {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }),
     "/api/scrape-reddit": {
       async POST(req) {
         const { subreddit, postLimit } = await req.json();
