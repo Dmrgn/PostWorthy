@@ -17,36 +17,38 @@ interface RedditPost {
 }
 
 export async function scrapeRedditPosts(subreddit: string, postLimit: number) {
-  const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch({ headless: true, executablePath: '/usr/bin/brave-browser', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   const page = await browser.newPage();
-  
+
   // Set viewport to mobile to match the Shreddit UI
   await page.setViewport({ width: 414, height: 896 });
 
   try {
     // Navigate to the Reddit URL
     await page.goto(`https://www.reddit.com/r/${subreddit}/`);
-    
+
     // Wait for the first batch of posts to load
     await page.waitForSelector('shreddit-post', { timeout: 10000 });
-    
+
     // Scroll to load more posts (adjust as needed)
     await page.evaluate(() => {
       window.scrollTo(0, document.body.scrollHeight);
     });
-    
+
     // Wait for content to load after scrolling
     await new Promise(resolve => setTimeout(resolve, 3000));
-    
+
     // Extract data
     const posts: RedditPost[] = await page.evaluate(() => {
       return Array.from(document.querySelectorAll('shreddit-post')).map(post => {
         const shadowRoot = post.shadowRoot;
         if (!shadowRoot) return null;
 
-        const title = post.getAttribute('post-title') || 
-                     post.querySelector('[slot="title"]')?.textContent?.trim() || '';
-        
+        const title = post.getAttribute('post-title') ||
+          post.querySelector('[slot="title"]')?.textContent?.trim() || '';
+
+        const content = post.querySelector('[slot="text-body"]')?.textContent?.trim().split("\n").map(x=>x.trim()).join(" ") || '';
+
         const author = post.getAttribute('author') || '';
         const subreddit = post.getAttribute('subreddit-name') || '';
         const createdTimestamp = post.getAttribute('created-timestamp') || '';
@@ -55,18 +57,18 @@ export async function scrapeRedditPosts(subreddit: string, postLimit: number) {
         const url = post.getAttribute('content-href') || '';
         const icon = post.getAttribute('icon') || '';
         const permalink = post.getAttribute('permalink') || '';
-        
+
         const flairElement = shadowRoot.querySelector('.flair-content');
         const flair = flairElement ? flairElement.textContent.trim() : null;
-        
+
         const bodyElement = shadowRoot.querySelector('.md.feed-card-text-preview');
-        const body = bodyElement ? 
+        const body = bodyElement ?
           Array.from(bodyElement.querySelectorAll('p'))
-              .map(p => p.textContent?.trim() || '')
-              .filter(text => text)
-              .join('\n') : 
+            .map(p => p.textContent?.trim() || '')
+            .filter(text => text)
+            .join('\n') :
           'No body text found';
-        
+
         return {
           title,
           author,
@@ -78,12 +80,12 @@ export async function scrapeRedditPosts(subreddit: string, postLimit: number) {
           icon,
           flair,
           body,
-          permalink
+          permalink,
+          content
         };
       }).filter(post => post !== null);
     });
 
-    console.log(JSON.stringify(posts, null, 2));
     return posts;
   } catch (error) {
     console.error('Error during scraping:', error);
@@ -93,4 +95,6 @@ export async function scrapeRedditPosts(subreddit: string, postLimit: number) {
 }
 
 // // Run the scraper
-// scrapeRedditPosts();
+// scrapeRedditPosts("saas", 10).then(x => {
+//   console.log(x.length);
+// });

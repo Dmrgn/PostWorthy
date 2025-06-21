@@ -10,6 +10,10 @@
   }
 }
 
+button {
+  @apply cursor-pointer;
+}
+
 /* cool Bun background animation 😎 */
 body::before {
   content: "";

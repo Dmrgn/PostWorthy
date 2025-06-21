@@ -36,16 +36,17 @@ export default function PostScraper({ subreddit, onComplete }: PostScraperProps)
         throw new Error("Failed to start scraping")
       }
 
-      // Simulate progress updates
+      // Smooth progress updates
       const progressInterval = setInterval(() => {
         setProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(progressInterval)
-            return prev
+          const remaining = 100 - prev;
+          if (remaining < 5) {
+            clearInterval(progressInterval);
+            return prev;
           }
-          return prev + Math.random() * 10
-        })
-      }, 1000)
+          return prev + remaining * 0.01;
+        });
+      }, 500);
 
       const statusMessages = [
         "Launching browser...",

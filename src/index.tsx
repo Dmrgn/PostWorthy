@@ -1,116 +1,137 @@
-// import { serve } from "bun";
-// import index from "./index.html";
-// import { scrapeRedditPosts } from "./lib/scrape";
+import { serve } from "bun";
+import index from "./index.html";
+import pdfParse from "pdf-parse";
+import { scrapeRedditPosts } from "./lib/scrape";
+import { getOpenRouterResponse, getCerebrasResponse } from "./lib/ai";
+import { PostSchema } from "./lib/schemas";
 
-// const server = serve({
-//   routes: {
-//     "/*": index,
-//     "/api/scrape-reddit": {
-//       async POST(req) {
-//         const { subreddit, postLimit } = await req.json();
-//         const posts = await scrapeRedditPosts(subreddit, postLimit);
-//         return Response.json({ posts });
-//       },
-//     },
-//   },
-//   development: true,
-// });
-
-// console.log(`Listening on ${server.url}`);
-
-
-// reddit-scraper.ts
-import puppeteer from 'puppeteer';
-
-interface RedditPost {
-  title: string;
-  author: string;
-  subreddit: string;
-  created: string;
-  score: number;
-  comments: number;
-  url: string;
-  icon: string;
-  flair: string | null;
-  body: string;
-  permalink: string;
+const server = serve({
+  routes: {
+    "/*": index,
+    "/api/scrape-reddit": {
+      async POST(req) {
+        const { subreddit, postLimit } = await req.json();
+        const posts = await scrapeRedditPosts(subreddit, postLimit);
+        return Response.json({ posts });
+      },
+    },
+    "/api/analyze-posts": {
+      async POST(req) {
+        const { posts } = await req.json();
+        const prompt = `Analyze the following Reddit posts and provide a summary in the following JSON format, respond with the JSON object and nothing else, do not wrap it in \`\`\`:
+{
+  "keywords": [
+    { "word": "string", "frequency": "number", "sentiment": "number 0-1" },
+  ],
+  "topics": [
+    { "topic": "string", "percentage": "number, "posts": "number" },
+  ],
+  "sentiment": {
+    "positive": "number",
+    "neutral": "number",
+    "negative": "number"
+  },
+  "engagement": [
+    { "type": "High Engagement", "count": "number", "avgScore": "number" },
+    { "type": "Medium Engagement", "count": "number", "avgScore": "number" },
+    { "type": "Low Engagement", "count": "number", "avgScore": "number" }
+  ],
+  "insights": [
+    "This should be a string talking about patterns you notice between posts that have high engagement.",
+    "Also include things to avoid that low engagement posts do.",
+    "You should have 3-5 of these!",
+  ]
 }
 
-export async function scrapeRedditPosts(subreddit: string, postLimit: number) {
-  const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-  const page = await browser.newPage();
-  
-  // Set viewport to mobile to match the Shreddit UI
-  await page.setViewport({ width: 414, height: 896 });
+Posts:
+${JSON.stringify(posts, null, 2)}`;
+        const analysis = await getOpenRouterResponse(prompt);
+        return Response.json({ analysis: JSON.parse(analysis) });
+      },
+    },
+    "/api/generate-posts": {
+      async POST(req) {
+        const { analysis, ragContext, customPrompt, creativity, postCount } =
+          await req.json();
 
-  try {
-    // Navigate to the Reddit URL
-    await page.goto(`https://www.reddit.com/r/${subreddit}/`);
-    
-    // Wait for the first batch of posts to load
-    await page.waitForSelector('shreddit-post', { timeout: 10000 });
-    
-    // Scroll to load more posts (adjust as needed)
-    await page.evaluate(() => {
-      window.scrollTo(0, document.body.scrollHeight);
-    });
-    
-    // Wait for content to load after scrolling
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Extract data
-    const posts: RedditPost[] = await page.evaluate(() => {
-      return Array.from(document.querySelectorAll('shreddit-post')).map(post => {
-        const shadowRoot = post.shadowRoot;
-        if (!shadowRoot) return null;
+        const contextText = ragContext.files
+          .map((file: any) => `Document: ${file.name}\n${file.content}`)
+          .join("\n\n");
 
-        const title = post.getAttribute('post-title') || 
-                     post.querySelector('[slot="title"]')?.textContent?.trim() || '';
-        
-        const author = post.getAttribute('author') || '';
-        const subreddit = post.getAttribute('subreddit-name') || '';
-        const createdTimestamp = post.getAttribute('created-timestamp') || '';
-        const score = parseInt(post.getAttribute('score') || '0', 10) || 0;
-        const commentCount = parseInt(post.getAttribute('comment-count') || '0', 10) || 0;
-        const url = post.getAttribute('content-href') || '';
-        const icon = post.getAttribute('icon') || '';
-        const permalink = post.getAttribute('permalink') || '';
-        
-        const flairElement = shadowRoot.querySelector('.flair-content');
-        const flair = flairElement ? flairElement.textContent.trim() : null;
-        
-        const bodyElement = shadowRoot.querySelector('.md.feed-card-text-preview');
-        const body = bodyElement ? 
-          Array.from(bodyElement.querySelectorAll('p'))
-              .map(p => p.textContent?.trim() || '')
-              .filter(text => text)
-              .join('\n') : 
-          'No body text found';
-        
-        return {
-          title,
-          author,
-          subreddit,
-          created: createdTimestamp,
-          score,
-          comments: commentCount,
-          url,
-          icon,
-          flair,
-          body,
-          permalink
-        };
-      }).filter(post => post !== null);
-    });
+        const prompt = `
+          Based on the following analysis and context, generate a single social media post.
+          Be critical in terms of scoring if the post is bad, or is not able to perfectly match the requirements.
+          Note, most posts will have low engagement, but try to do as best as you can!
 
-    console.log(JSON.stringify(posts, null, 2));
-    return posts;
-  } catch (error) {
-    console.error('Error during scraping:', error);
-  } finally {
-    await browser.close();
-  }
-}
+          **Analysis:**
+          ${JSON.stringify(analysis.insights, null, 2)}
 
-// // Run the scraper
-scrapeRedditPosts("saas", 10);
+          **Brand & Marketing Context:**
+          ${contextText}
+
+          **Additional Instructions:**
+          ${customPrompt || "N/A"}
+
+          **Creativity Level:** ${creativity} (0.1=conservative, 1=very creative)
+
+          **Output Format (JSON only, no \`\`\`):**
+          {
+            "content": "Your generated post content here.",
+            "score": "number out of 100 with single decimal place",
+            "engagement_prediction": "number from 0 to 10000",
+            "relevance_score": "number out of 100",
+            "brand_alignment": "number out of 100",
+            "format": "text or tip or question or story",
+            "hashtags": ["#example", "#post"],
+            "estimated_reach": "number from 0 to 50000"
+          }
+        `;
+
+        const posts = [];
+        for (let i = 0; i < postCount; i++) {
+          let retries = 0;
+          while (retries < 2) {
+            try {
+              const post = await getCerebrasResponse(prompt);
+              console.log(post);
+              const parsed = JSON.parse(post);
+              PostSchema.parse(parsed);
+              posts.push(parsed);
+              break; // Exit retry loop on success
+            } catch (error) {
+              console.error("Validation failed, retrying...", error);
+              retries++;
+            }
+          }
+          // Wait for 2 seconds before the next request
+          if (i < postCount - 1) {
+            await new Promise((resolve) => setTimeout(resolve, 500));
+          }
+        }
+        return Response.json({ posts });
+      },
+    },
+    "/api/process-pdfs": {
+      async POST(req) {
+        const formData = await req.formData();
+        const files = formData.getAll("files") as File[];
+
+        const processedFiles = await Promise.all(
+          files.map(async (file) => {
+            const buffer = await file.arrayBuffer();
+            const data = await pdfParse(Buffer.from(buffer));
+            return {
+              name: file.name,
+              content: data.text,
+            };
+          })
+        );
+
+        return Response.json({ files: processedFiles });
+      },
+    },
+  },
+  development: true,
+});
+
+console.log(`Listening on ${server.url}`);

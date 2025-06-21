@@ -20,91 +20,50 @@ export default function AnalysisResults({ posts, onComplete }: AnalysisResultsPr
   const [progress, setProgress] = useState(0)
   const [analysis, setAnalysis] = useState<any>(null)
 
-  const startAnalysis = async () => {
-    setIsAnalyzing(true)
-    setProgress(0)
-
-    try {
-      // Simulate progress
-      const progressInterval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(progressInterval)
-            return prev
-          }
-          return prev + Math.random() * 15
-        })
-      }, 1500)
-
-      const response = await fetch("/api/analyze-posts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ posts }),
-      })
-
-      const data = await response.json()
-
-      clearInterval(progressInterval)
-      setProgress(100)
-      setAnalysis(data.analysis)
-      setAnalysisComplete(true)
-      setIsAnalyzing(false)
-    } catch (error) {
-      console.error("Analysis failed:", error)
-      setIsAnalyzing(false)
-    }
-  }
-
-  // Mock analysis data for demo
-  const mockAnalysis = {
-    keywords: [
-      { word: "marketing", frequency: 45, sentiment: 0.7 },
-      { word: "strategy", frequency: 38, sentiment: 0.6 },
-      { word: "content", frequency: 32, sentiment: 0.8 },
-      { word: "social media", frequency: 28, sentiment: 0.5 },
-      { word: "engagement", frequency: 25, sentiment: 0.9 },
-    ],
-    topics: [
-      { topic: "Content Marketing", percentage: 35, posts: 18 },
-      { topic: "Social Media Strategy", percentage: 28, posts: 14 },
-      { topic: "Brand Building", percentage: 22, posts: 11 },
-      { topic: "Analytics & Metrics", percentage: 15, posts: 8 },
-    ],
-    sentiment: {
-      positive: 65,
-      neutral: 25,
-      negative: 10,
-    },
-    engagement: [
-      { type: "High Engagement", count: 12, avgScore: 850 },
-      { type: "Medium Engagement", count: 23, avgScore: 320 },
-      { type: "Low Engagement", count: 15, avgScore: 85 },
-    ],
-    formats: [
-      { format: "Text Post", count: 28, engagement: 420 },
-      { format: "Link Share", count: 15, engagement: 680 },
-      { format: "Image Post", count: 7, engagement: 920 },
-    ],
-    insights: [
-      "Posts with questions get 40% more engagement",
-      "Content posted between 9-11 AM performs best",
-      "Posts with 3-5 hashtags have optimal reach",
-      "Tutorial-style content has highest save rate",
-    ],
-  }
-
   useEffect(() => {
-    if (!isAnalyzing && !analysisComplete) {
-      // Auto-start analysis with mock data for demo
-      setTimeout(() => {
-        setAnalysis(mockAnalysis)
-        setAnalysisComplete(true)
-      }, 1000)
-    }
-  }, [])
+    const performAnalysis = async () => {
+      setIsAnalyzing(true);
+      setProgress(0);
+
+      try {
+        // Smooth progress updates
+        const progressInterval = setInterval(() => {
+          setProgress((prev) => {
+            const remaining = 100 - prev;
+            if (remaining < 5) {
+              clearInterval(progressInterval);
+              return prev;
+            }
+            return prev + remaining * 0.1;
+          });
+        }, 500);
+
+        const response = await fetch("/api/analyze-posts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ posts }),
+        });
+
+        const data = await response.json();
+
+        console.log(data);
+
+        clearInterval(progressInterval);
+        setProgress(100);
+        setAnalysis(data.analysis);
+        setAnalysisComplete(true);
+        setIsAnalyzing(false);
+      } catch (error) {
+        console.error("Analysis failed:", error);
+        setIsAnalyzing(false);
+      }
+    };
+
+    performAnalysis();
+  }, [posts]);
 
   const handleComplete = () => {
-    onComplete({ analysis: analysis || mockAnalysis })
+    onComplete({ analysis: analysis })
   }
 
   if (!analysisComplete) {
@@ -119,14 +78,14 @@ export default function AnalysisResults({ posts, onComplete }: AnalysisResultsPr
           patterns...
         </p>
         <div className="max-w-md mx-auto">
-          <Progress value={75} className="h-2" />
+          <Progress value={progress} className="h-2" />
           <p className="text-sm text-slate-500 mt-2">Processing with long context window...</p>
         </div>
       </div>
     )
   }
 
-  const currentAnalysis = analysis || mockAnalysis
+  const currentAnalysis = analysis
 
   return (
     <div className="space-y-6">

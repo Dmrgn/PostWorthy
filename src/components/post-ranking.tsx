@@ -47,27 +47,48 @@ export default function PostRanking({ posts, analysis }: PostRankingProps) {
     navigator.clipboard.writeText(content)
   }
 
-  const exportPosts = () => {
-    const exportData = sortedPosts.map((post) => ({
-      rank: sortedPosts.indexOf(post) + 1,
+  const exportPosts = (limit?: number) => {
+    const postsToExport = limit ? sortedPosts.slice(0, limit) : sortedPosts;
+    const exportData = postsToExport.map((post, index) => ({
+      rank: index + 1,
       content: post.content,
       hashtags: post.hashtags.join(" "),
       format: post.format,
       scores: {
-        overall: post.score.toFixed(1),
-        engagement: post.engagement_prediction.toFixed(0),
-        relevance: post.relevance_score.toFixed(1),
-        brand_alignment: post.brand_alignment.toFixed(1),
+        overall: post.score,
+        engagement: post.engagement_prediction,
+        relevance: post.relevance_score,
+        brand_alignment: post.brand_alignment,
       },
-    }))
+    }));
 
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = "generated-posts.json"
-    a.click()
-  }
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `generated-posts${limit ? "-top-10" : ""}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const copyAllContent = () => {
+    const allContent = sortedPosts
+      .map(
+        (post, index) =>
+          `Rank #${index + 1}\nScore: ${post.score}\n\n${
+            post.content
+          }\n\nHashtags: ${post.hashtags.join(" ")}`
+      )
+      .join("\n\n---\n\n");
+    copyToClipboard(allContent);
+    alert("All post content copied to clipboard!");
+  };
+
+  const startNewAnalysis = () => {
+    window.location.reload();
+  };
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-green-600 bg-green-100"
@@ -120,7 +141,11 @@ export default function PostRanking({ posts, analysis }: PostRankingProps) {
           </Select>
         </div>
 
-        <Button onClick={exportPosts} variant="outline" className="bg-white text-slate-700">
+        <Button
+          onClick={() => exportPosts()}
+          variant="outline"
+          className="bg-white text-slate-700"
+        >
           <Download className="w-4 h-4 mr-2" />
           Export All
         </Button>
@@ -163,7 +188,7 @@ export default function PostRanking({ posts, analysis }: PostRankingProps) {
       {/* Posts List */}
       <div className="space-y-4">
         {sortedPosts.map((post, index) => (
-          <Card key={post.id} className={`${index < 3 ? "border-2 border-blue-200" : ""}`}>
+          <Card key={index} className={`${index < 3 ? "border-2 border-blue-200" : ""}`}>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -173,7 +198,11 @@ export default function PostRanking({ posts, analysis }: PostRankingProps) {
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge className={`px-2 py-1 text-xs ${getScoreColor(post.score)}`}>{post.score.toFixed(1)}</Badge>
+                  <Badge
+                    className={`px-2 py-1 text-xs ${getScoreColor(post.score)}`}
+                  >
+                    {post.score}
+                  </Badge>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -210,14 +239,14 @@ export default function PostRanking({ posts, analysis }: PostRankingProps) {
                       <Star className="w-4 h-4 mr-1" />
                       <span className="text-xs">Relevance</span>
                     </div>
-                    <div className="font-medium">{post.relevance_score.toFixed(1)}</div>
+                    <div className="font-medium">{post.relevance_score}</div>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center text-slate-600 mb-1">
                       <Heart className="w-4 h-4 mr-1" />
                       <span className="text-xs">Brand Fit</span>
                     </div>
-                    <div className="font-medium">{post.brand_alignment.toFixed(1)}</div>
+                    <div className="font-medium">{post.brand_alignment}</div>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center text-slate-600 mb-1">
@@ -236,17 +265,30 @@ export default function PostRanking({ posts, analysis }: PostRankingProps) {
       {/* Action Buttons */}
       <div className="text-center pt-6 border-t">
         <div className="space-y-4">
-          <p className="text-slate-600">🎉 Your AI-powered content analysis and generation is complete!</p>
+          <p className="text-slate-600">
+            🎉 Your AI-powered content analysis and generation is complete!
+          </p>
           <div className="flex flex-wrap gap-3 justify-center">
-            <Button className="bg-green-600 hover:bg-green-700 text-white">
+            <Button
+              onClick={() => exportPosts(10)}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
               <Download className="w-4 h-4 mr-2" />
               Download Top 10
             </Button>
-            <Button variant="outline" className="bg-white text-slate-700">
+            <Button
+              onClick={copyAllContent}
+              variant="outline"
+              className="bg-white text-slate-700"
+            >
               <Copy className="w-4 h-4 mr-2" />
               Copy All Content
             </Button>
-            <Button variant="outline" className="bg-white text-slate-700">
+            <Button
+              onClick={startNewAnalysis}
+              variant="outline"
+              className="bg-white text-slate-700"
+            >
               Start New Analysis
             </Button>
           </div>

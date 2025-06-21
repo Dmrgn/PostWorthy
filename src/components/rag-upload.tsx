@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -18,12 +18,13 @@ interface UploadedFile {
   size: number
   status: "uploading" | "processing" | "complete" | "error"
   progress: number
-  content?: string
+  content?: string;
+  file?: File;
 }
 
 export default function RagUpload({ onComplete }: RagUploadProps) {
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
-  const [isProcessing, setIsProcessing] = useState(false)
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles = acceptedFiles.map((file) => ({
@@ -32,15 +33,20 @@ export default function RagUpload({ onComplete }: RagUploadProps) {
       size: file.size,
       status: "uploading" as const,
       progress: 0,
-    }))
+      file,
+    }));
 
-    setUploadedFiles((prev) => [...prev, ...newFiles])
+    setUploadedFiles((prev) => [...prev, ...newFiles]);
 
-    // Simulate file processing
-    newFiles.forEach((file) => {
-      simulateFileProcessing(file.id)
-    })
-  }, [])
+    // Mark files as ready for processing immediately
+    setUploadedFiles((prev) =>
+      prev.map((f) =>
+        newFiles.find((nf) => nf.id === f.id)
+          ? { ...f, status: "complete", progress: 100 }
+          : f
+      )
+    );
+  }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -50,28 +56,6 @@ export default function RagUpload({ onComplete }: RagUploadProps) {
     multiple: true,
   })
 
-  const simulateFileProcessing = (fileId: string) => {
-    const updateProgress = (progress: number, status: UploadedFile["status"]) => {
-      setUploadedFiles((prev) => prev.map((file) => (file.id === fileId ? { ...file, progress, status } : file)))
-    }
-
-    // Upload simulation
-    let progress = 0
-    const uploadInterval = setInterval(() => {
-      progress += Math.random() * 20
-      if (progress >= 100) {
-        clearInterval(uploadInterval)
-        updateProgress(100, "processing")
-
-        // Processing simulation
-        setTimeout(() => {
-          updateProgress(100, "complete")
-        }, 2000)
-      } else {
-        updateProgress(progress, "uploading")
-      }
-    }, 300)
-  }
 
   const removeFile = (fileId: string) => {
     setUploadedFiles((prev) => prev.filter((file) => file.id !== fileId))
@@ -86,20 +70,49 @@ export default function RagUpload({ onComplete }: RagUploadProps) {
   }
 
   const handleComplete = async () => {
-    setIsProcessing(true)
+    setIsProcessing(true);
 
-    // Simulate RAG context creation
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    // Mark all files as processing
+    setUploadedFiles((prev) =>
+      prev.map((f) => ({ ...f, status: "processing" }))
+    );
 
-    const context = {
-      files: uploadedFiles.filter((f) => f.status === "complete"),
-      vectorStore: "created",
-      embeddings: "processed",
-      ready: true,
+    const formData = new FormData();
+    uploadedFiles.forEach((file) => {
+      if (file.file) {
+        formData.append("files", file.file);
+      }
+    });
+
+    try {
+      console.log("start");
+      const response = await fetch("/api/process-pdfs", {
+        method: "POST",
+        body: formData,
+      });
+      console.log("end");
+
+      const { files } = await response.json();
+
+      // Mark all files as complete
+      setUploadedFiles((prev) =>
+        prev.map((f) => ({ ...f, status: "complete" }))
+      );
+
+      onComplete({
+        context: {
+          files,
+          vectorStore: "created",
+          embeddings: "processed",
+          ready: true,
+        },
+      });
+    } catch (error) {
+      console.error("Error processing files:", error);
+      setUploadedFiles((prev) => prev.map((f) => ({ ...f, status: "error" })));
+      setIsProcessing(false);
     }
-
-    onComplete({ context })
-  }
+  };
 
   const completedFiles = uploadedFiles.filter((f) => f.status === "complete")
   const canProceed = completedFiles.length > 0
@@ -172,7 +185,9 @@ export default function RagUpload({ onComplete }: RagUploadProps) {
                           )}
                         </div>
                       </div>
-                      {file.status !== "complete" && <Progress value={file.progress} className="h-1" />}
+                      {(file.status === "uploading" || file.status === "processing") && (
+                        <Progress value={file.progress} className="h-1" />
+                      )}
                     </div>
                   </div>
                   <Button

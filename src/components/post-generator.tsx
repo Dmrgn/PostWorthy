@@ -20,75 +20,54 @@ export default function PostGenerator({ analysis, ragContext, onComplete }: Post
   const [progress, setProgress] = useState(0)
   const [customPrompt, setCustomPrompt] = useState("")
   const [creativity, setCreativity] = useState([0.7])
-  const [postCount] = useState(20)
+  const [postCount] = useState(10)
 
   const startGeneration = async () => {
-    setIsGenerating(true)
-    setProgress(0)
+    setIsGenerating(true);
+    setProgress(0);
+
+    // Real-time progress tracking
+    const progressInterval = setInterval(() => {
+      setProgress((prev) => {
+        const remaining = 100 - prev;
+        return prev + remaining * 0.05; // Smoothly approach 100%
+      });
+    }, 500);
 
     try {
-      // Simulate agentic generation with progress updates
-      const progressInterval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 95) {
-            clearInterval(progressInterval)
-            return prev
-          }
-          return prev + Math.random() * 8
-        })
-      }, 800)
+      const response = await fetch("/api/generate-posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          analysis,
+          ragContext: {
+            ...ragContext,
+            files: ragContext.files.map((f: any) => ({
+              name: f.name,
+              content: f.content,
+            })),
+          },
+          customPrompt,
+          creativity: creativity[0],
+          postCount,
+        }),
+      });
 
-      // Simulate API call to Cerebras
-      await new Promise((resolve) => setTimeout(resolve, 8000))
+      const data = await response.json();
 
-      // Mock generated posts
-      const mockPosts = Array.from({ length: postCount }, (_, i) => ({
-        id: i + 1,
-        content: generateMockPost(i, analysis),
-        score: Math.random() * 100,
-        engagement_prediction: Math.random() * 1000,
-        relevance_score: Math.random() * 100,
-        brand_alignment: Math.random() * 100,
-        format: ["text", "question", "tip", "story"][Math.floor(Math.random() * 4)],
-        hashtags: generateHashtags(analysis),
-        estimated_reach: Math.floor(Math.random() * 10000) + 1000,
-      }))
-
-      clearInterval(progressInterval)
-      setProgress(100)
-      setGeneratedPosts(mockPosts)
-      setIsGenerating(false)
+      clearInterval(progressInterval);
+      setProgress(100);
+      setGeneratedPosts(data.posts);
+      setIsGenerating(false);
     } catch (error) {
-      console.error("Generation failed:", error)
-      setIsGenerating(false)
+      console.error("Generation failed:", error);
+      setIsGenerating(false);
     }
-  }
-
-  const generateMockPost = (index: number, analysis: any) => {
-    const templates = [
-      `🚀 Just discovered an amazing ${analysis?.keywords?.[0]?.word || "marketing"} strategy that increased engagement by 40%! Here's what worked:\n\n• Focus on authentic storytelling\n• Use data-driven insights\n• Engage with your community\n\nWhat's your go-to strategy? 👇`,
-
-      `💡 Quick tip: The best ${analysis?.keywords?.[1]?.word || "content"} performs 3x better when you:\n\n✅ Ask questions in your posts\n✅ Share behind-the-scenes content\n✅ Use relevant hashtags strategically\n\nTry this approach and watch your engagement soar! 📈`,
-
-      `🤔 Unpopular opinion: ${analysis?.keywords?.[2]?.word || "social media"} success isn't about follower count.\n\nIt's about:\n→ Building genuine connections\n→ Providing real value\n→ Staying consistent\n\nQuality > Quantity every time. Agree? 🎯`,
-
-      `📊 Data doesn't lie: Posts with ${analysis?.keywords?.[0]?.word || "strategy"} in the title get 60% more clicks.\n\nBut here's the catch - it only works if your content delivers on the promise.\n\nAlways lead with value, not just catchy headlines. 💪`,
-
-      `🔥 Hot take: The future of ${analysis?.keywords?.[1]?.word || "marketing"} is personal.\n\nBrands that share their story, values, and mission will win.\n\nPeople don't just buy products - they buy into beliefs.\n\nWhat does your brand stand for? 🌟`,
-    ]
-
-    return templates[index % templates.length]
-  }
-
-  const generateHashtags = (analysis: any) => {
-    const baseHashtags = ["#marketing", "#socialmedia", "#content", "#strategy", "#business"]
-    const analysisHashtags = analysis?.keywords?.slice(0, 3).map((k: any) => `#${k.word.replace(" ", "")}`) || []
-    return [...baseHashtags.slice(0, 3), ...analysisHashtags].slice(0, 5)
-  }
+  };
 
   const handleComplete = () => {
-    onComplete({ posts: generatedPosts })
-  }
+    onComplete({ posts: generatedPosts });
+  };
 
   return (
     <div className="space-y-6">
@@ -161,7 +140,7 @@ export default function PostGenerator({ analysis, ragContext, onComplete }: Post
           <div className="text-center">
             <Button onClick={startGeneration} size="lg" className="bg-purple-600 hover:bg-purple-700 text-white">
               <Zap className="w-5 h-5 mr-2" />
-              Generate 20 Posts
+              Generate 10 Posts
             </Button>
           </div>
         </div>
@@ -217,11 +196,13 @@ export default function PostGenerator({ analysis, ragContext, onComplete }: Post
             </CardHeader>
             <CardContent>
               <div className="space-y-4 max-h-96 overflow-y-auto">
-                {generatedPosts.slice(0, 3).map((post) => (
+                {generatedPosts.slice(0, 3).map((post, index) => (
                   <div key={post.id} className="border rounded-lg p-4 bg-slate-50">
                     <div className="flex justify-between items-start mb-2">
                       <Badge variant="outline">{post.format}</Badge>
-                      <div className="text-xs text-slate-500">Score: {post.score.toFixed(1)}</div>
+                      <div className="text-xs text-slate-500">
+                        Score: {post.score}
+                      </div>
                     </div>
                     <p className="text-sm text-slate-700 mb-2 line-clamp-3">{post.content}</p>
                     <div className="flex flex-wrap gap-1">
