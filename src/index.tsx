@@ -77,6 +77,7 @@ ${JSON.stringify(posts, null, 2)}`;
 
           **Output Format (JSON only, no \`\`\`):**
           {
+            "title": "Your generated post title here."
             "content": "Your generated post content here.",
             "score": "number out of 100 with single decimal place",
             "engagement_prediction": "number from 0 to 10000",

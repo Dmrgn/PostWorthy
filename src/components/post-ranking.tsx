@@ -16,31 +16,38 @@ export default function PostRanking({ posts, analysis }: PostRankingProps) {
   const [sortBy, setSortBy] = useState("overall")
   const [filterBy, setFilterBy] = useState("all")
   const [sortedPosts, setSortedPosts] = useState(posts)
+  const [error, setError] = useState("")
 
   useEffect(() => {
-    let filtered = posts
+    try {
+      let filtered = posts
 
-    // Apply filters
-    if (filterBy !== "all") {
-      filtered = posts.filter((post) => post.format === filterBy)
-    }
-
-    // Apply sorting
-    const sorted = [...filtered].sort((a, b) => {
-      switch (sortBy) {
-        case "engagement":
-          return b.engagement_prediction - a.engagement_prediction
-        case "relevance":
-          return b.relevance_score - a.relevance_score
-        case "brand":
-          return b.brand_alignment - a.brand_alignment
-        case "overall":
-        default:
-          return b.score - a.score
+      // Apply filters
+      if (filterBy !== "all") {
+        filtered = posts.filter(post => post.format === filterBy)
       }
-    })
 
-    setSortedPosts(sorted)
+      // Apply sorting
+      const sorted = [...filtered].sort((a, b) => {
+        switch (sortBy) {
+          case "engagement":
+            return b.engagement_prediction - a.engagement_prediction
+          case "relevance":
+            return b.relevance_score - a.relevance_score
+          case "brand":
+            return b.brand_alignment - a.brand_alignment
+          case "overall":
+          default:
+            return b.score - a.score
+        }
+      })
+
+      setSortedPosts(sorted)
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "An unknown error occurred"
+      setError(errorMessage)
+    }
   }, [sortBy, filterBy, posts])
 
   const copyToClipboard = (content: string) => {
@@ -48,30 +55,36 @@ export default function PostRanking({ posts, analysis }: PostRankingProps) {
   }
 
   const exportPosts = (limit?: number) => {
-    const postsToExport = limit ? sortedPosts.slice(0, limit) : sortedPosts;
-    const exportData = postsToExport.map((post, index) => ({
-      rank: index + 1,
-      content: post.content,
-      hashtags: post.hashtags.join(" "),
-      format: post.format,
-      scores: {
-        overall: post.score,
-        engagement: post.engagement_prediction,
-        relevance: post.relevance_score,
-        brand_alignment: post.brand_alignment,
-      },
-    }));
+    try {
+      const postsToExport = limit ? sortedPosts.slice(0, limit) : sortedPosts
+      const exportData = postsToExport.map((post, index) => ({
+        rank: index + 1,
+        content: post.content,
+        hashtags: post.hashtags.join(" "),
+        format: post.format,
+        scores: {
+          overall: post.score,
+          engagement: post.engagement_prediction,
+          relevance: post.relevance_score,
+          brand_alignment: post.brand_alignment,
+        },
+      }))
 
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `generated-posts${limit ? "-top-10" : ""}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+        type: "application/json",
+      })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `generated-posts${limit ? "-top-10" : ""}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "An unknown error occurred"
+      setError(errorMessage)
+    }
+  }
 
   const copyAllContent = () => {
     const allContent = sortedPosts
@@ -101,6 +114,17 @@ export default function PostRanking({ posts, analysis }: PostRankingProps) {
     if (index === 1) return <Badge className="bg-gray-400 text-white">🥈 #2</Badge>
     if (index === 2) return <Badge className="bg-amber-600 text-white">🥉 #3</Badge>
     return <Badge variant="outline">#{index + 1}</Badge>
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-red-500">
+        <p>Error: {error}</p>
+        <Button onClick={() => window.location.reload()} className="mt-4">
+          Retry
+        </Button>
+      </div>
+    )
   }
 
   return (
@@ -197,6 +221,7 @@ export default function PostRanking({ posts, analysis }: PostRankingProps) {
                     {post.format}
                   </Badge>
                 </div>
+                <div>{post.title}</div>
                 <div className="flex items-center gap-2">
                   <Badge
                     className={`px-2 py-1 text-xs ${getScoreColor(post.score)}`}

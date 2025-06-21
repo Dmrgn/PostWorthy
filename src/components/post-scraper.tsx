@@ -33,7 +33,13 @@ export default function PostScraper({ subreddit, onComplete }: PostScraperProps)
       })
 
       if (!response.ok) {
-        throw new Error("Failed to start scraping")
+        if (response.status === 404) {
+          throw new Error(`Subreddit "r/${subreddit}" not found. Please check the name and try again.`);
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || `HTTP error! status: ${response.status}`
+        );
       }
 
       // Smooth progress updates
@@ -80,13 +86,26 @@ export default function PostScraper({ subreddit, onComplete }: PostScraperProps)
         setIsScrapingActive(false)
       }, 1000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
+      const errorMessage =
+        err instanceof Error ? err.message : "An unknown error occurred"
+      setError(errorMessage)
+      setCurrentStatus("Scraping failed")
       setIsScrapingActive(false)
     }
   }
 
   const handleComplete = () => {
-    onComplete({ posts: scrapedPosts })
+    try {
+      if (!scrapedPosts || scrapedPosts.length === 0) {
+        throw new Error("No posts were scraped. Cannot proceed.")
+      }
+      onComplete({ posts: scrapedPosts })
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "An unknown error occurred"
+      setError(errorMessage)
+      setCurrentStatus("Completion failed")
+    }
   }
 
   return (
@@ -187,7 +206,7 @@ export default function PostScraper({ subreddit, onComplete }: PostScraperProps)
             </div>
 
             <div className="text-center">
-              <Button onClick={handleComplete} size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button onClick={handleComplete} size="lg" className="bg-orange-600 hover:bg-orange-700 text-white">
                 Continue to Analysis
                 <CheckCircle className="w-4 h-4 ml-2" />
               </Button>

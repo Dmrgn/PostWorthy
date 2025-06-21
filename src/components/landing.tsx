@@ -104,7 +104,7 @@ export default function LandingPage() {
 
         {/* Features Section */}
         <section id="features" className="py-20 bg-gray-50">
-          <div className="container px-4 md:px-6">
+          <div className="container px-4 md:px-6 mx-auto">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <Badge variant="secondary" className="bg-orange-100 text-orange-800">Features</Badge>
@@ -165,11 +165,11 @@ export default function LandingPage() {
 
         {/* Final CTA Section */}
         <section className="py-20">
-          <div className="container px-4 md:px-6">
+          <div className="container px-4 md:px-6 mx-auto">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Ready to supercharge your content?</h2>
-                <p className="max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                <p className="mx-auto max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                   Start using Adsistance now and take your content strategy to the next level.
                 </p>
               </div>
@@ -189,7 +189,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer id="contact" className="border-t bg-gray-50">
         <div className="container px-4 md:px-6 py-12">
-          <div className="grid gap-8 lg:grid-cols-4">
+          <div className="grid gap-8 lg:grid-cols-3">
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-600">
@@ -210,7 +210,7 @@ export default function LandingPage() {
                 <a href="https://github.com/dmrgn/" className="text-gray-400 hover:text-gray-600">
                   <Github className="h-5 w-5" />
                 </a>
-                <a href="#" className="text-gray-400 hover:text-gray-600">
+                <a href="mailto:me@danielmorgan.xyz" className="text-gray-400 hover:text-gray-600">
                   <Mail className="h-5 w-5" />
                 </a>
               </div>
@@ -228,23 +228,12 @@ export default function LandingPage() {
             <div className="space-y-4">
               <h4 className="text-sm font-semibold">Company</h4>
               <div className="space-y-2 text-sm">
-                <a href="mailto:example@example.com" className="block text-gray-500 hover:text-gray-900">
+                <a href="mailto:me@danielmorgan.xyz" className="block text-gray-500 hover:text-gray-900">
                   Contact
                 </a>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold">Legal</h4>
-              <div className="space-y-2 text-sm">
-                <a href="#" className="block text-gray-500 hover:text-gray-900">
-                  Privacy Policy
-                </a>
-                <a href="#" className="block text-gray-500 hover:text-gray-900">
-                  Terms of Service
-                </a>
-              </div>
-            </div>
           </div>
 
           <div className="mt-8 border-t pt-8 flex flex-col sm:flex-row justify-between items-center">

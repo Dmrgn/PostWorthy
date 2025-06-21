@@ -40,7 +40,7 @@ export default function SubredditSelector({ onComplete }: SubredditSelectorProps
             <Card
               key={sub.name}
               className={`cursor-pointer transition-all hover:shadow-md ${
-                selectedSubreddit === sub.name ? "ring-2 ring-blue-500 bg-blue-50" : ""
+                selectedSubreddit === sub.name ? "ring-2 ring-blue-500 bg-orange-50" : ""
               }`}
               onClick={() => {
                 setSelectedSubreddit(sub.name)
@@ -106,7 +106,7 @@ export default function SubredditSelector({ onComplete }: SubredditSelectorProps
         <Button
           onClick={handleSubmit}
           disabled={!selectedSubreddit && !customSubreddit}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="bg-orange-600 hover:bg-orange-700 text-white"
         >
           Continue to Scraping
           <TrendingUp className="w-4 h-4 ml-2" />

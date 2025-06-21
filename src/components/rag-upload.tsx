@@ -23,30 +23,37 @@ interface UploadedFile {
 }
 
 export default function RagUpload({ onComplete }: RagUploadProps) {
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [error, setError] = useState("")
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    const newFiles = acceptedFiles.map((file) => ({
-      id: Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      size: file.size,
-      status: "uploading" as const,
-      progress: 0,
-      file,
-    }));
+    try {
+      const newFiles = acceptedFiles.map(file => ({
+        id: Math.random().toString(36).substr(2, 9),
+        name: file.name,
+        size: file.size,
+        status: "uploading" as const,
+        progress: 0,
+        file,
+      }))
 
-    setUploadedFiles((prev) => [...prev, ...newFiles]);
+      setUploadedFiles(prev => [...prev, ...newFiles])
 
-    // Mark files as ready for processing immediately
-    setUploadedFiles((prev) =>
-      prev.map((f) =>
-        newFiles.find((nf) => nf.id === f.id)
-          ? { ...f, status: "complete", progress: 100 }
-          : f
+      // Mark files as ready for processing immediately
+      setUploadedFiles(prev =>
+        prev.map(f =>
+          newFiles.find(nf => nf.id === f.id)
+            ? { ...f, status: "complete", progress: 100 }
+            : f
+        )
       )
-    );
-  }, []);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "An unknown error occurred"
+      setError(errorMessage)
+    }
+  }, [])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -106,13 +113,16 @@ export default function RagUpload({ onComplete }: RagUploadProps) {
           embeddings: "processed",
           ready: true,
         },
-      });
-    } catch (error) {
-      console.error("Error processing files:", error);
-      setUploadedFiles((prev) => prev.map((f) => ({ ...f, status: "error" })));
-      setIsProcessing(false);
+      })
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "An unknown error occurred"
+      setError(errorMessage)
+      setUploadedFiles(prev => prev.map(f => ({ ...f, status: "error" })))
+    } finally {
+      setIsProcessing(false)
     }
-  };
+  }
 
   const completedFiles = uploadedFiles.filter((f) => f.status === "complete")
   const canProceed = completedFiles.length > 0
@@ -132,7 +142,7 @@ export default function RagUpload({ onComplete }: RagUploadProps) {
           <div
             {...getRootProps()}
             className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-              isDragActive ? "border-blue-400 bg-blue-50" : "border-slate-300 hover:border-slate-400"
+              isDragActive ? "border-blue-400 bg-orange-50" : "border-slate-300 hover:border-slate-400"
             }`}
           >
             <input {...getInputProps()} />
@@ -178,7 +188,7 @@ export default function RagUpload({ onComplete }: RagUploadProps) {
                             </Badge>
                           )}
                           {file.status === "processing" && (
-                            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                            <Badge variant="secondary" className="bg-orange-100 text-blue-800">
                               <Loader2 className="w-3 h-3 mr-1 animate-spin" />
                               Processing
                             </Badge>
@@ -206,7 +216,7 @@ export default function RagUpload({ onComplete }: RagUploadProps) {
       )}
 
       {/* RAG Context Status */}
-      {completedFiles.length > 0 && (
+      {completedFiles.length > 0 && !error && (
         <Card className="border-green-200 bg-green-50">
           <CardContent className="p-4">
             <div className="flex items-center text-green-700 mb-2">
@@ -214,9 +224,29 @@ export default function RagUpload({ onComplete }: RagUploadProps) {
               <span className="font-medium">RAG Context Ready</span>
             </div>
             <p className="text-green-600 text-sm">
-              {completedFiles.length} document{completedFiles.length !== 1 ? "s" : ""} processed and ready for AI
-              generation
+              {completedFiles.length} document
+              {completedFiles.length !== 1 ? "s" : ""} processed and ready for
+              AI generation
             </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-center text-red-700 mb-2">
+              <X className="w-5 h-5 mr-2" />
+              <span className="font-medium">Processing Failed</span>
+            </div>
+            <p className="text-red-600 text-sm">{error}</p>
+            <Button
+              onClick={handleComplete}
+              variant="outline"
+              className="mt-3"
+            >
+              Retry
+            </Button>
           </CardContent>
         </Card>
       )}

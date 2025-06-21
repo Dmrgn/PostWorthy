@@ -19,51 +19,80 @@ export default function AnalysisResults({ posts, onComplete }: AnalysisResultsPr
   const [analysisComplete, setAnalysisComplete] = useState(false)
   const [progress, setProgress] = useState(0)
   const [analysis, setAnalysis] = useState<any>(null)
+  const [error, setError] = useState("")
 
   useEffect(() => {
     const performAnalysis = async () => {
-      setIsAnalyzing(true);
-      setProgress(0);
+      setIsAnalyzing(true)
+      setProgress(0)
+      setError("")
 
       try {
         // Smooth progress updates
         const progressInterval = setInterval(() => {
-          setProgress((prev) => {
-            const remaining = 100 - prev;
+          setProgress(prev => {
+            const remaining = 100 - prev
             if (remaining < 5) {
-              clearInterval(progressInterval);
-              return prev;
+              clearInterval(progressInterval)
+              return prev
             }
-            return prev + remaining * 0.1;
-          });
-        }, 500);
+            return prev + remaining * 0.04
+          })
+        }, 500)
 
         const response = await fetch("/api/analyze-posts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ posts }),
-        });
+        })
 
-        const data = await response.json();
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(
+            errorData.error || `HTTP error! status: ${response.status}`
+          )
+        }
 
-        console.log(data);
+        const data = await response.json()
 
-        clearInterval(progressInterval);
-        setProgress(100);
-        setAnalysis(data.analysis);
-        setAnalysisComplete(true);
-        setIsAnalyzing(false);
-      } catch (error) {
-        console.error("Analysis failed:", error);
-        setIsAnalyzing(false);
+        clearInterval(progressInterval)
+        setProgress(100)
+        setAnalysis(data.analysis)
+        setAnalysisComplete(true)
+        setIsAnalyzing(false)
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "An unknown error occurred"
+        setError(errorMessage)
+        setIsAnalyzing(false)
       }
-    };
+    }
 
-    performAnalysis();
-  }, [posts]);
+    performAnalysis()
+  }, [posts])
 
   const handleComplete = () => {
-    onComplete({ analysis: analysis })
+    try {
+      if (!analysis) {
+        throw new Error("Analysis is not available. Cannot proceed.")
+      }
+      onComplete({ analysis })
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "An unknown error occurred"
+      setError(errorMessage)
+    }
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-red-500">
+        <p>Error: {error}</p>
+        <Button onClick={() => window.location.reload()} className="mt-4">
+          Retry
+        </Button>
+      </div>
+    )
   }
 
   if (!analysisComplete) {

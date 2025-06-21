@@ -21,16 +21,18 @@ export default function PostGenerator({ analysis, ragContext, onComplete }: Post
   const [customPrompt, setCustomPrompt] = useState("")
   const [creativity, setCreativity] = useState([0.7])
   const [postCount] = useState(10)
+  const [error, setError] = useState("")
 
   const startGeneration = async () => {
-    setIsGenerating(true);
-    setProgress(0);
+    setIsGenerating(true)
+    setProgress(0)
+    setError("")
 
     // Real-time progress tracking
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
         const remaining = 100 - prev;
-        return prev + remaining * 0.05; // Smoothly approach 100%
+        return prev + remaining * 0.1; // Smoothly approach 100%
       });
     }, 500);
 
@@ -53,21 +55,39 @@ export default function PostGenerator({ analysis, ragContext, onComplete }: Post
         }),
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(
+          errorData.error || `HTTP error! status: ${response.status}`
+        )
+      }
 
-      clearInterval(progressInterval);
-      setProgress(100);
-      setGeneratedPosts(data.posts);
-      setIsGenerating(false);
-    } catch (error) {
-      console.error("Generation failed:", error);
-      setIsGenerating(false);
+      const data = await response.json()
+
+      clearInterval(progressInterval)
+      setProgress(100)
+      setGeneratedPosts(data.posts)
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "An unknown error occurred"
+      setError(errorMessage)
+    } finally {
+      setIsGenerating(false)
     }
-  };
+  }
 
   const handleComplete = () => {
-    onComplete({ posts: generatedPosts });
-  };
+    try {
+      if (!generatedPosts || generatedPosts.length === 0) {
+        throw new Error("No posts were generated. Cannot proceed.")
+      }
+      onComplete({ posts: generatedPosts })
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "An unknown error occurred"
+      setError(errorMessage)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -174,6 +194,25 @@ export default function PostGenerator({ analysis, ragContext, onComplete }: Post
         </Card>
       )}
 
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-center text-red-700">
+              <Zap className="w-5 h-5 mr-2" />
+              <span className="font-medium">Generation Failed</span>
+            </div>
+            <p className="text-red-600 mt-1">{error}</p>
+            <Button
+              onClick={startGeneration}
+              variant="outline"
+              className="mt-3 bg-white text-red-700 border-red-300"
+            >
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {generatedPosts.length > 0 && !isGenerating && (
         <div className="space-y-6">
           <Card className="border-green-200 bg-green-50">
@@ -222,7 +261,7 @@ export default function PostGenerator({ analysis, ragContext, onComplete }: Post
           </Card>
 
           <div className="text-center">
-            <Button onClick={handleComplete} size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button onClick={handleComplete} size="lg" className="bg-orange-600 hover:bg-orange-700 text-white">
               Continue to Ranking
               <CheckCircle className="w-4 h-4 ml-2" />
             </Button>
