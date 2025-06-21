@@ -1,37 +1,99 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { APITester } from "./APITester";
+import { useState } from "react";
+import SubredditSelector from "@/components/subreddit-selector";
+import PostScraper from "@/components/post-scraper";
+import AnalysisResults from "@/components/analysis-results";
+import PostGenerator from "@/components/post-generator";
+import PostRanking from "@/components/post-ranking";
+import RAGUpload from "@/components/rag-upload";
 import "./index.css";
 
-import logo from "./logo.svg";
-import reactLogo from "./react.svg";
+type AppState =
+  | "SUBREDDIT_SELECTION"
+  | "POST_SCRAPING"
+  | "ANALYSIS_RESULTS"
+  | "RAG_UPLOAD"
+  | "POST_GENERATION"
+  | "POST_RANKING";
 
 export function App() {
-  return (
-    <div className="container mx-auto p-8 text-center relative z-10">
-      <div className="flex justify-center items-center gap-8 mb-8">
-        <img
-          src={logo}
-          alt="Bun Logo"
-          className="h-36 p-6 transition-all duration-300 hover:drop-shadow-[0_0_2em_#646cffaa] scale-120"
-        />
-        <img
-          src={reactLogo}
-          alt="React Logo"
-          className="h-36 p-6 transition-all duration-300 hover:drop-shadow-[0_0_2em_#61dafbaa] [animation:spin_20s_linear_infinite]"
-        />
-      </div>
+  const [appState, setAppState] = useState<AppState>("SUBREDDIT_SELECTION");
+  const [subreddit, setSubreddit] = useState("");
+  const [posts, setPosts] = useState<any[]>([]);
+  const [analysis, setAnalysis] = useState<any>(null);
+  const [ragContext, setRagContext] = useState<any>(null);
+  const [generatedPosts, setGeneratedPosts] = useState<any[]>([]);
 
-      <Card className="bg-card/50 backdrop-blur-sm border-muted">
-        <CardContent className="pt-6">
-          <h1 className="text-5xl font-bold my-4 leading-tight">Bun + React</h1>
-          <p>
-            Edit{" "}
-            <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">src/App.tsx</code> and
-            save to test HMR
-          </p>
-          <APITester />
-        </CardContent>
-      </Card>
+  const handleSubredditSelection = (data: {
+    subreddit: string;
+    postLimit: number;
+  }) => {
+    setSubreddit(data.subreddit);
+    setAppState("POST_SCRAPING");
+  };
+
+  const handleScrapingComplete = (data: { posts: any[] }) => {
+    setPosts(data.posts);
+    setAppState("ANALYSIS_RESULTS");
+  };
+
+  const handleAnalysisComplete = (data: { analysis: any }) => {
+    setAnalysis(data.analysis);
+    setAppState("RAG_UPLOAD");
+  };
+
+  const handleRagUploadComplete = (data: { context: any }) => {
+    setRagContext(data.context);
+    setAppState("POST_GENERATION");
+  };
+
+  const handlePostGenerationComplete = (data: { posts: any[] }) => {
+    setGeneratedPosts(data.posts);
+    setAppState("POST_RANKING");
+  };
+
+  const renderStep = () => {
+    switch (appState) {
+      case "SUBREDDIT_SELECTION":
+        return <SubredditSelector onComplete={handleSubredditSelection} />;
+      case "POST_SCRAPING":
+        return (
+          <PostScraper
+            subreddit={subreddit}
+            onComplete={handleScrapingComplete}
+          />
+        );
+      case "ANALYSIS_RESULTS":
+        return (
+          <AnalysisResults
+            posts={posts}
+            onComplete={handleAnalysisComplete}
+          />
+        );
+      case "RAG_UPLOAD":
+        return <RAGUpload onComplete={handleRagUploadComplete} />;
+      case "POST_GENERATION":
+        return (
+          <PostGenerator
+            analysis={analysis}
+            ragContext={ragContext}
+            onComplete={handlePostGenerationComplete}
+          />
+        );
+      case "POST_RANKING":
+        return <PostRanking posts={generatedPosts} analysis={analysis} />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="container mx-auto p-8">
+      <div className="w-full max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold text-center mb-8">
+          AI-Powered Content Generation
+        </h1>
+        {renderStep()}
+      </div>
     </div>
   );
 }

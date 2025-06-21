@@ -29,7 +29,7 @@ export default function PostScraper({ subreddit, onComplete }: PostScraperProps)
       const response = await fetch("/api/scrape-reddit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subreddit }),
+        body: JSON.stringify({ subreddit, postLimit: 50 }),
       })
 
       if (!response.ok) {

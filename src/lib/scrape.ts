@@ -16,7 +16,7 @@ interface RedditPost {
   permalink: string;
 }
 
-async function scrapeRedditPosts() {
+export async function scrapeRedditPosts(subreddit: string, postLimit: number) {
   const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
   
@@ -25,7 +25,7 @@ async function scrapeRedditPosts() {
 
   try {
     // Navigate to the Reddit URL
-    await page.goto('https://www.reddit.com/r/SaaS/');
+    await page.goto(`https://www.reddit.com/r/${subreddit}/`);
     
     // Wait for the first batch of posts to load
     await page.waitForSelector('shreddit-post', { timeout: 10000 });
@@ -36,7 +36,7 @@ async function scrapeRedditPosts() {
     });
     
     // Wait for content to load after scrolling
-    await page.waitForTimeout(3000);
+    await new Promise(resolve => setTimeout(resolve, 3000));
     
     // Extract data
     const posts: RedditPost[] = await page.evaluate(() => {
