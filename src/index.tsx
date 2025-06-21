@@ -7,7 +7,8 @@ import { PostSchema } from "./lib/schemas";
 
 const server = serve({
   routes: {
-    "/*": index,
+    "/": index,
+    "/app": index,
     "/api/scrape-reddit": {
       async POST(req) {
         const { subreddit, postLimit } = await req.json();
