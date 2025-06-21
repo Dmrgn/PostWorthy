@@ -91,6 +91,7 @@ export async function scrapeRedditPosts(subreddit: string, postLimit: number) {
     return posts;
   } catch (error) {
     console.error('Error during scraping:', error);
+    console.log(document.body.textContent);
   } finally {
     await browser.close();
   }
