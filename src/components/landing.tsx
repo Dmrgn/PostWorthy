@@ -24,7 +24,7 @@ export default function LandingPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-600">
               <BarChart3 className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold">Adsistance</span>
+            <span className="text-xl font-bold">PostWorthy</span>
           </div>
 
           <nav className="hidden md:flex items-center space-x-6">
@@ -38,7 +38,7 @@ export default function LandingPage() {
 
           <div className="flex items-center space-x-4">
             <Button variant="ghost" className="hidden md:inline-flex" asChild>
-              <a href="https://github.com/Dmrgn/Adsistance">Source Code
+              <a href="https://github.com/Dmrgn/PostWorthy">Source Code
                 <Github></Github>
               </a>
             </Button>
@@ -67,7 +67,7 @@ export default function LandingPage() {
                     <span className="text-orange-600"> Instantly</span>
                   </h1>
                   <p className="max-w-[600px] text-gray-500 md:text-xl">
-                    Adsistance helps you understand your audience and generate high-performing content. Scrape posts, analyze trends, and create engaging content with ease.
+                    PostWorthy helps you understand your audience and generate high-performing content. Scrape posts, analyze trends, and create engaging content with ease.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
@@ -94,7 +94,7 @@ export default function LandingPage() {
                   src="/hero.png"
                   width={600}
                   height={400}
-                  alt="Adsistance Dashboard"
+                  alt="PostWorthy Dashboard"
                   className="aspect-video overflow-hidden rounded-xl object-cover shadow-2xl"
                 />
               </div>
@@ -170,7 +170,7 @@ export default function LandingPage() {
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Ready to supercharge your content?</h2>
                 <p className="mx-auto max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Start using Adsistance now and take your content strategy to the next level.
+                  Start using PostWorthy now and take your content strategy to the next level.
                 </p>
               </div>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
@@ -195,7 +195,7 @@ export default function LandingPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-600">
                   <BarChart3 className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-xl font-bold">Adsistance</span>
+                <span className="text-xl font-bold">PostWorthy</span>
               </div>
               <p className="text-sm text-gray-500">
                 AI-powered content insights and generation.
@@ -207,7 +207,7 @@ export default function LandingPage() {
                 <a href="https://linkedin.danielmorgan.xyz" className="text-gray-400 hover:text-gray-600">
                   <Linkedin className="h-5 w-5" />
                 </a>
-                <a href="https://github.com/Dmrgn/Adsistance" className="text-gray-400 hover:text-gray-600">
+                <a href="https://github.com/Dmrgn/PostWorthy" className="text-gray-400 hover:text-gray-600">
                   <Github className="h-5 w-5" />
                 </a>
                 <a href="mailto:me@danielmorgan.xyz" className="text-gray-400 hover:text-gray-600">
@@ -237,7 +237,7 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-8 border-t pt-8 flex flex-col sm:flex-row justify-between items-center">
-            <p className="text-xs text-gray-500">© {new Date().getFullYear()} Adsistance. All rights reserved.</p>
+            <p className="text-xs text-gray-500">© {new Date().getFullYear()} PostWorthy. All rights reserved.</p>
           </div>
         </div>
       </footer>

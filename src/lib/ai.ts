@@ -11,7 +11,7 @@ const openai = new OpenAI({
     apiKey: process.env['OPENROUTER_API_KEY'],
     defaultHeaders: {
         'HTTP-Referer': 'https://danielmorgan.xyz',
-        'X-Title': 'Adsistance',
+        'X-Title': 'PostWorthy',
     },
 });
 
