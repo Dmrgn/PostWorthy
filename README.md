@@ -1,21 +1,7 @@
-# bun-react-tailwind-shadcn-template
+# PostWorthy
 
-To install dependencies:
+A web app which scrapes a subreddit and performs extensive data analysis and natural language processing to determine what keywords, topics, etc get the most interactions.
 
-```bash
-bun install
-```
+Made for SpurHacks 2025.
 
-To start a development server:
-
-```bash
-bun dev
-```
-
-To run for production:
-
-```bash
-bun start
-```
-
-This project was created using `bun init` in bun v1.2.16. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+[Presentation](https://drive.google.com/file/d/1xUyp2V62m1pnopmGOaotD_Y7G1oK4Ews/view?usp=sharing)
